@@ -15,6 +15,7 @@ A clean, static launcher page designed for the Tesla in-car browser. It provides
   - ARD Mediathek
   - ZDF Mediathek
 - Fully static output suitable for GitHub Pages hosting
+- Fullscreen-launch workaround: service taps route through YouTube redirect URLs before opening the selected provider
 
 ## Development
 

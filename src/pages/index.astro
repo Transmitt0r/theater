@@ -3,15 +3,21 @@ import '../styles/global.css';
 
 const baseUrl = import.meta.env.BASE_URL;
 
+const buildFullscreenLaunchUrl = (targetUrl: string) =>
+	`https://www.youtube.com/redirect?q=${encodeURIComponent(targetUrl)}`;
+
 const services = [
-	{ name: 'Netflix', href: 'https://www.netflix.com/' },
-	{ name: 'Disney+', href: 'https://www.disneyplus.com/' },
-	{ name: 'Prime Video', href: 'https://www.primevideo.com/' },
-	{ name: 'HBO Max', href: 'https://www.max.com/' },
-	{ name: 'YouTube', href: 'https://www.youtube.com/' },
-	{ name: 'ARD Mediathek', href: 'https://www.ardmediathek.de/' },
-	{ name: 'ZDF Mediathek', href: 'https://www.zdf.de/' }
-];
+	{ name: 'Netflix', targetUrl: 'https://www.netflix.com/browse' },
+	{ name: 'Disney+', targetUrl: 'https://www.disneyplus.com/home' },
+	{ name: 'Prime Video', targetUrl: 'https://www.primevideo.com/' },
+	{ name: 'HBO Max', targetUrl: 'https://www.max.com/' },
+	{ name: 'YouTube', targetUrl: 'https://www.youtube.com/' },
+	{ name: 'ARD Mediathek', targetUrl: 'https://www.ardmediathek.de/' },
+	{ name: 'ZDF Mediathek', targetUrl: 'https://www.zdf.de/' }
+].map((service) => ({
+	...service,
+	launchUrl: buildFullscreenLaunchUrl(service.targetUrl)
+}));
 ---
 
 <html lang="en">
@@ -34,12 +40,40 @@ const services = [
 			<section class="tile-grid" aria-label="Streaming services">
 				{
 					services.map((service) => (
-						<a class="tile" href={service.href} target="_self" rel="noopener noreferrer">
+						<a
+							class="tile"
+							href={service.launchUrl}
+							target="_self"
+							rel="noopener noreferrer"
+							data-target-url={service.targetUrl}
+						>
 							<span class="tile__name">{service.name}</span>
 						</a>
 					))
 				}
 			</section>
 		</main>
+
+		<script>
+			const buildFullscreenLaunchUrl = (targetUrl) =>
+				`https://www.youtube.com/redirect?q=${encodeURIComponent(targetUrl)}`;
+
+			const navigateToFullscreenTarget = (targetUrl) => {
+				window.location.href = buildFullscreenLaunchUrl(targetUrl);
+			};
+
+			document.querySelectorAll('[data-target-url]').forEach((tile) => {
+				tile.addEventListener('click', (event) => {
+					event.preventDefault();
+					const targetUrl = tile.getAttribute('data-target-url');
+
+					if (!targetUrl) {
+						return;
+					}
+
+					navigateToFullscreenTarget(targetUrl);
+				});
+			});
+		</script>
 	</body>
 </html>
