@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
@@ -11,13 +13,15 @@ permissions:
   id-token: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: pages-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
-  build:
+  # Note: GitHub Pages PR preview deployments via deploy-pages `preview: true` are not generally available yet.
+  # We validate PR builds here and only deploy to production from main/workflow_dispatch.
+  build-preview-check:
+    if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -31,7 +35,28 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Build Astro site
+      - name: Build Astro site (PR validation)
+        run: npm run build
+        env:
+          BASE_PATH: /theater
+
+  build-main:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Astro site (production)
         run: npm run build
         env:
           BASE_PATH: /theater
@@ -41,11 +66,14 @@ jobs:
         with:
           path: ./dist
 
-  deploy:
-    needs: build
+  deploy-main:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    needs: build-main
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+      url: ${{ steps.production_deploy.outputs.page_url }}
     steps:
-      - name: Deploy to GitHub Pages
+      - name: Deploy to GitHub Pages (production)
+        id: production_deploy
         uses: actions/deploy-pages@v4

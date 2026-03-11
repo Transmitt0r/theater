@@ -24,7 +24,7 @@ npm install
 npm run dev
 ```
 
-The local dev server runs from `/` by default for convenience.
+The default base path is `/theater/` (GitHub Pages project path). For local root-path testing, run with `BASE_PATH=/`.
 
 ## Build
 
@@ -36,10 +36,10 @@ Generated static output is written to `dist/`.
 
 ## GitHub Pages base path
 
-GitHub Pages for this repository is served from `/theater`. Set `BASE_PATH=/theater` during the production build so generated asset URLs and routes resolve correctly:
+GitHub Pages for this repository is served from `/theater/`, which is now also the default build base.
+
+If you need a root-path build for local testing, override it explicitly:
 
 ```sh
-BASE_PATH=/theater npm run build
+BASE_PATH=/ npm run build
 ```
-
-The included GitHub Actions workflow already sets this environment variable.
