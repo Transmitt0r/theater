@@ -1,17 +1,45 @@
 ---
+import '../styles/global.css';
 
+const baseUrl = import.meta.env.BASE_URL;
+
+const services = [
+	{ name: 'Netflix', href: 'https://www.netflix.com/' },
+	{ name: 'Disney+', href: 'https://www.disneyplus.com/' },
+	{ name: 'Prime Video', href: 'https://www.primevideo.com/' },
+	{ name: 'HBO Max', href: 'https://www.max.com/' },
+	{ name: 'YouTube', href: 'https://www.youtube.com/' },
+	{ name: 'ARD Mediathek', href: 'https://www.ardmediathek.de/' },
+	{ name: 'ZDF Mediathek', href: 'https://www.zdf.de/' }
+];
 ---
 
 <html lang="en">
 	<head>
 		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
+		<link rel="icon" type="image/svg+xml" href={`${baseUrl}favicon.svg`} />
+		<link rel="icon" href={`${baseUrl}favicon.ico`} />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<meta name="theme-color" content="#0b0d11" />
+		<title>Tesla Theater Launcher</title>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		<main class="launcher" aria-label="Streaming services launcher">
+			<header class="launcher__header">
+				<p class="launcher__eyebrow">Media</p>
+				<h1 class="launcher__title">Theater</h1>
+			</header>
+
+			<section class="tile-grid" aria-label="Streaming services">
+				{
+					services.map((service) => (
+						<a class="tile" href={service.href} target="_self" rel="noopener noreferrer">
+							<span class="tile__name">{service.name}</span>
+						</a>
+					))
+				}
+			</section>
+		</main>
 	</body>
 </html>
