@@ -51,8 +51,10 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages
+      url: ${{ steps.production_deploy.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages (production)
+        id: production_deploy
         uses: actions/deploy-pages@v4
 
   build-preview:
@@ -88,6 +90,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: github-pages-preview
+      url: ${{ steps.preview_deploy.outputs.page_url }}
     steps:
       - name: Deploy to GitHub Pages (preview)
         id: preview_deploy
@@ -97,9 +100,44 @@ jobs:
 
       - name: Comment preview URL on PR
         uses: actions/github-script@v7
+        env:
+          FALLBACK_PAGE_URL: ${{ steps.preview_deploy.outputs.page_url }}
         with:
           script: |
-            const body = `🔍 GitHub Pages preview is ready: ${{ steps.preview_deploy.outputs.page_url }}`;
             const { owner, repo } = context.repo;
             const issue_number = context.issue.number;
+
+            let previewUrl = process.env.FALLBACK_PAGE_URL;
+
+            try {
+              const deployments = await github.paginate(github.rest.repos.listDeployments, {
+                owner,
+                repo,
+                environment: 'github-pages-preview',
+                sha: context.sha,
+                per_page: 100
+              });
+
+              if (deployments.length > 0) {
+                const latest = deployments[0];
+                const statuses = await github.paginate(github.rest.repos.listDeploymentStatuses, {
+                  owner,
+                  repo,
+                  deployment_id: latest.id,
+                  per_page: 100
+                });
+
+                const success = statuses.find((status) => status.state === 'success' && status.environment_url);
+                if (success?.environment_url) {
+                  previewUrl = success.environment_url;
+                }
+              }
+            } catch (error) {
+              core.warning(`Could not resolve preview deployment URL via API: ${error.message}`);
+            }
+
+            const body = previewUrl
+              ? `🔍 GitHub Pages preview is ready: ${previewUrl}`
+              : '🔍 GitHub Pages preview deployment finished, but no preview URL was returned. Please open the deploy-preview job logs.';
+
             await github.rest.issues.createComment({ owner, repo, issue_number, body });
