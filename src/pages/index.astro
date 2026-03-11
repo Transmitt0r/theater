@@ -7,13 +7,13 @@ const buildFullscreenLaunchUrl = (targetUrl: string) =>
 	`https://www.youtube.com/redirect?q=${encodeURIComponent(targetUrl)}`;
 
 const services = [
-	{ name: 'Netflix', targetUrl: 'https://www.netflix.com/browse' },
-	{ name: 'Disney+', targetUrl: 'https://www.disneyplus.com/home' },
-	{ name: 'Prime Video', targetUrl: 'https://www.primevideo.com/' },
-	{ name: 'HBO Max', targetUrl: 'https://www.max.com/' },
-	{ name: 'YouTube', targetUrl: 'https://www.youtube.com/' },
-	{ name: 'ARD Mediathek', targetUrl: 'https://www.ardmediathek.de/' },
-	{ name: 'ZDF Mediathek', targetUrl: 'https://www.zdf.de/' }
+	{ name: 'Netflix', targetUrl: 'https://www.netflix.com/browse', logo: `${baseUrl}logos/netflix.svg`, tone: 'netflix' },
+	{ name: 'Disney+', targetUrl: 'https://www.disneyplus.com/home', logo: `${baseUrl}logos/disneyplus.svg`, tone: 'disney' },
+	{ name: 'Prime Video', targetUrl: 'https://www.primevideo.com/', logo: `${baseUrl}logos/prime-video.svg`, tone: 'prime' },
+	{ name: 'HBO Max', targetUrl: 'https://www.max.com/', logo: `${baseUrl}logos/max.svg`, tone: 'max' },
+	{ name: 'YouTube', targetUrl: 'https://www.youtube.com/', logo: `${baseUrl}logos/youtube.svg`, tone: 'youtube' },
+	{ name: 'ARD Mediathek', targetUrl: 'https://www.ardmediathek.de/', logo: `${baseUrl}logos/ard.svg`, tone: 'ard' },
+	{ name: 'ZDF Mediathek', targetUrl: 'https://www.zdf.de/', logo: `${baseUrl}logos/zdf.svg`, tone: 'zdf' }
 ].map((service) => ({
 	...service,
 	launchUrl: buildFullscreenLaunchUrl(service.targetUrl)
@@ -27,27 +27,28 @@ const services = [
 		<link rel="icon" href={`${baseUrl}favicon.ico`} />
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
 		<meta name="generator" content={Astro.generator} />
-		<meta name="theme-color" content="#0b0d11" />
+		<meta name="theme-color" media="(prefers-color-scheme: light)" content="#f2f2f4" />
+		<meta name="theme-color" media="(prefers-color-scheme: dark)" content="#15161b" />
 		<title>Tesla Theater Launcher</title>
 	</head>
 	<body>
-		<main class="launcher" aria-label="Streaming services launcher">
-			<header class="launcher__header">
-				<p class="launcher__eyebrow">Media</p>
-				<h1 class="launcher__title">Theater</h1>
-			</header>
+		<main class="theater" aria-label="Streaming services launcher">
+			<section class="hero" aria-label="Tesla heading">
+				<img class="hero__logo" src={`${baseUrl}logos/tesla-t.svg`} alt="Tesla logo" />
+			</section>
 
 			<section class="tile-grid" aria-label="Streaming services">
 				{
 					services.map((service) => (
 						<a
-							class="tile"
+							class={`tile tile--${service.tone}`}
 							href={service.launchUrl}
 							target="_self"
 							rel="noopener noreferrer"
 							data-target-url={service.targetUrl}
+							aria-label={service.name}
 						>
-							<span class="tile__name">{service.name}</span>
+							<img class="tile__logo" src={service.logo} alt={`${service.name} logo`} loading="lazy" />
 						</a>
 					))
 				}
@@ -58,10 +59,6 @@ const services = [
 			const buildFullscreenLaunchUrl = (targetUrl) =>
 				`https://www.youtube.com/redirect?q=${encodeURIComponent(targetUrl)}`;
 
-			const navigateToFullscreenTarget = (targetUrl) => {
-				window.location.href = buildFullscreenLaunchUrl(targetUrl);
-			};
-
 			document.querySelectorAll('[data-target-url]').forEach((tile) => {
 				tile.addEventListener('click', (event) => {
 					event.preventDefault();
@@ -71,7 +68,7 @@ const services = [
 						return;
 					}
 
-					navigateToFullscreenTarget(targetUrl);
+					window.location.href = buildFullscreenLaunchUrl(targetUrl);
 				});
 			});
 		</script>

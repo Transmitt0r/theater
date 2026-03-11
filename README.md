@@ -1,12 +1,12 @@
 # Tesla Theater Launcher
 
-A clean, static launcher page designed for the Tesla in-car browser. It provides quick, touch-friendly access to major streaming services without ads, clutter, or unnecessary navigation.
+A static launcher page designed for the Tesla in-car browser. The layout uses a centered Tesla T mark with clean OEM-style service tiles.
 
 ## Features
 
-- Minimal dark interface inspired by Tesla's in-car UI language
-- Large tiles optimized for in-car touch interaction
-- Direct launch links for:
+- Tesla-style visual layout (centered Tesla mark + touch-first 3-column tile grid)
+- Automatic light/dark appearance using system/browser theme preference (`prefers-color-scheme`)
+- Neutral high-contrast tile backgrounds with official service logos for:
   - Netflix
   - Disney+
   - Prime Video
