@@ -3,7 +3,8 @@ import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 
-const base = process.env.BASE_PATH ?? '/';
+const rawBase = process.env.BASE_PATH ?? '/theater/';
+const base = rawBase.endsWith('/') ? rawBase : `${rawBase}/`;
 
 // https://astro.build/config
 export default defineConfig({
