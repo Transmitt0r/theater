@@ -3,16 +3,19 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
   pages: write
   id-token: write
+  pull-requests: write
 
 concurrency:
-  group: "pages"
-  cancel-in-progress: false
+  group: pages-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -34,7 +37,7 @@ jobs:
       - name: Build Astro site
         run: npm run build
         env:
-          BASE_PATH: /theater
+          BASE_PATH: ${{ github.event_name == 'pull_request' && '/' || '/theater' }}
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
@@ -49,3 +52,5 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         uses: actions/deploy-pages@v4
+        with:
+          preview: ${{ github.event_name == 'pull_request' }}
