@@ -11,17 +11,38 @@ permissions:
   contents: read
   pages: write
   id-token: write
-  pull-requests: write
 
 concurrency:
   group: pages-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
+  # Note: GitHub Pages PR preview deployments via deploy-pages `preview: true` are not generally available yet.
+  # We validate PR builds here and only deploy to production from main/workflow_dispatch.
+  build-preview-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Astro site (PR validation)
+        run: npm run build
+        env:
+          BASE_PATH: /theater
+
   build-main:
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -56,88 +77,3 @@ jobs:
       - name: Deploy to GitHub Pages (production)
         id: production_deploy
         uses: actions/deploy-pages@v4
-
-  build-preview:
-    if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v5
-
-      - name: Setup Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build Astro site (preview)
-        run: npm run build
-        env:
-          BASE_PATH: /
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: ./dist
-
-  deploy-preview:
-    if: github.event_name == 'pull_request'
-    needs: build-preview
-    runs-on: ubuntu-latest
-    environment:
-      name: github-pages-preview
-      url: ${{ steps.preview_deploy.outputs.page_url }}
-    steps:
-      - name: Deploy to GitHub Pages (preview)
-        id: preview_deploy
-        uses: actions/deploy-pages@v4
-        with:
-          preview: true
-
-      - name: Comment preview URL on PR
-        uses: actions/github-script@v7
-        env:
-          FALLBACK_PAGE_URL: ${{ steps.preview_deploy.outputs.page_url }}
-        with:
-          script: |
-            const { owner, repo } = context.repo;
-            const issue_number = context.issue.number;
-
-            let previewUrl = process.env.FALLBACK_PAGE_URL;
-
-            try {
-              const deployments = await github.paginate(github.rest.repos.listDeployments, {
-                owner,
-                repo,
-                environment: 'github-pages-preview',
-                sha: context.sha,
-                per_page: 100
-              });
-
-              if (deployments.length > 0) {
-                const latest = deployments[0];
-                const statuses = await github.paginate(github.rest.repos.listDeploymentStatuses, {
-                  owner,
-                  repo,
-                  deployment_id: latest.id,
-                  per_page: 100
-                });
-
-                const success = statuses.find((status) => status.state === 'success' && status.environment_url);
-                if (success?.environment_url) {
-                  previewUrl = success.environment_url;
-                }
-              }
-            } catch (error) {
-              core.warning(`Could not resolve preview deployment URL via API: ${error.message}`);
-            }
-
-            const body = previewUrl
-              ? `🔍 GitHub Pages preview is ready: ${previewUrl}`
-              : '🔍 GitHub Pages preview deployment finished, but no preview URL was returned. Please open the deploy-preview job logs.';
-
-            await github.rest.issues.createComment({ owner, repo, issue_number, body });
